@@ -1,17 +1,17 @@
 indent-width = 4
-line-length = 79
+line-length = 110
 required-version = ">=0.9.4"
-target-version = "py311"
+target-version = "py312"
 # Enable preview features.
 preview = true
 # Содержимое папки alembic-а в проверку не включаем
-exclude = ["src/alembic"]
+exclude = ["src/migrations"]
 
 [format]
 # Enable reformatting of code snippets in docstrings.
 docstring-code-format = true
 # Format all docstring code snippets with a line length of 60.
-docstring-code-line-length = 60
+docstring-code-line-length = 80
 # Use `\n` line endings for all files
 line-ending = "lf"
 # Prefer single quotes over double quotes.
@@ -40,6 +40,6 @@ known-local-folder = ["src"]
 max-complexity = 10
 
 [lint.pycodestyle]
-max-doc-length = 79
+max-doc-length = 100
 # E501 reports lines that exceed the length of 79.
-max-line-length = 79
+max-line-length = 110
