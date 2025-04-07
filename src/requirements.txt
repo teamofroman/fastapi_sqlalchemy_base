@@ -1,1 +1,9 @@
 # Основные зависимости здесь
+fastapi==0.115.12
+uvicorn==0.34.0
+SQLAlchemy[asyncio]==2.0.40
+pydantic==2.11.2
+pydantic-settings==2.8.1
+asyncpg==0.30.0
+python-dotenv==1.1.0
+alembic==1.15.2
