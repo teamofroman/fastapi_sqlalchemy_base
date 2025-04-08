@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     """Класс настроек приложения."""
 
     app_port: int = 8000
+    app_title: str = 'FastAPI application'
+    app_description: str = ''
+    app_version: str = '0.0.0'
 
     postgres_user: str
     postgres_password: str
