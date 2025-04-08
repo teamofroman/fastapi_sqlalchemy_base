@@ -7,6 +7,9 @@ from starlette.middleware.base import (
     RequestResponseEndpoint,
 )
 
+from api.endpoints import main_router, router_v1
+from core.config import settings
+
 
 class FixProtocolMiddleware(BaseHTTPMiddleware):
     """Обработка запроса."""
@@ -43,10 +46,15 @@ def get_fastapi_app() -> FastAPI:
     """
     app = FastAPI(
         lifespan=lifespan,
+        title=settings.app_title,
+        description=settings.app_description,
+        version=settings.app_version,
     )
 
     app.add_middleware(FixProtocolMiddleware)
 
     # TODO: Добавить обработчики запросов
+    app.include_router(main_router)
+    app.include_router(router_v1)
 
     return app
