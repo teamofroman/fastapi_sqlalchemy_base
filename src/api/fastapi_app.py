@@ -9,6 +9,7 @@ from starlette.middleware.base import (
 
 from api.endpoints import main_router, router_v1
 from core.config import settings
+from core.db import db_manager
 
 
 class FixProtocolMiddleware(BaseHTTPMiddleware):
@@ -34,7 +35,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app (FastAPI): Приложение FastAPI.
 
     """
+    db_manager.init(db_url=settings.database_url)
     yield
+    await db_manager.close()
 
 
 def get_fastapi_app() -> FastAPI:
