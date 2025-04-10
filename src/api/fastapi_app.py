@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
 from fastapi import FastAPI, Request, Response
+from loguru import logger
 from starlette.middleware.base import (
     BaseHTTPMiddleware,
     RequestResponseEndpoint,
@@ -35,8 +36,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app (FastAPI): Приложение FastAPI.
 
     """
+    logger.info('Инициализация соединения с БД')
     db_manager.init(db_url=settings.database_url)
     yield
+    logger.info('Закрытие соединения с БД')
     await db_manager.close()
 
 
@@ -47,6 +50,7 @@ def get_fastapi_app() -> FastAPI:
         app (FastAPI): Сконфигурированное приложение FastAPI.
 
     """
+    logger.info('Starting FastAPI')
     app = FastAPI(
         lifespan=lifespan,
         title=settings.app_title,

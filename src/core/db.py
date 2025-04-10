@@ -1,6 +1,7 @@
 import contextlib
 from typing import AsyncIterator, Optional
 
+from loguru import logger
 from sqlalchemy.ext.asyncio import (
     AsyncConnection,
     AsyncEngine,
@@ -40,6 +41,7 @@ class DatabaseSessionManager:
             bind=self._engine,
             expire_on_commit=False,
         )
+        logger.info('DatabaseSessionManager инициализирован')
 
     async def close(self) -> None:
         """Закрытие соединения с БД."""
@@ -48,6 +50,7 @@ class DatabaseSessionManager:
         await self._engine.dispose()
         self._engine = None
         self._sessionmaker = None
+        logger.info('DatabaseSessionManager закрыт')
 
     @contextlib.asynccontextmanager
     async def session_without_commit(self) -> AsyncIterator[AsyncSession]:
@@ -56,12 +59,14 @@ class DatabaseSessionManager:
             raise IOError('DatabaseSessionManager is not initialized')
         async with self._sessionmaker() as session:
             try:
+                logger.info(f'Сессия {id(session)} без коммита создана')
                 yield session
             except Exception:
                 await session.rollback()
                 raise
             finally:
                 await session.close()
+                logger.info(f'Сессия {id(session)} без коммита закрыта')
 
     @contextlib.asynccontextmanager
     async def session_with_commit(self) -> AsyncIterator[AsyncSession]:
@@ -70,6 +75,7 @@ class DatabaseSessionManager:
             raise IOError('DatabaseSessionManager is not initialized')
         async with self._sessionmaker() as session:
             try:
+                logger.info(f'Сессия {id(session)} c коммитом создана')
                 yield session
                 await session.commit()
             except Exception:
@@ -77,6 +83,7 @@ class DatabaseSessionManager:
                 raise
             finally:
                 await session.close()
+                logger.info(f'Сессия {id(session)} с коммитом закрыта')
 
     @contextlib.asynccontextmanager
     async def connect(self) -> AsyncIterator[AsyncConnection]:
@@ -85,10 +92,13 @@ class DatabaseSessionManager:
             raise IOError('DatabaseSessionManager is not initialized')
         async with self._engine.begin() as connection:
             try:
+                logger.info(f'Соединение {id(connection)} создано')
                 yield connection
             except Exception:
                 await connection.rollback()
                 raise
+            finally:
+                logger.info(f'Соединение {id(connection)} закрыто')
 
 
 db_manager = DatabaseSessionManager()
@@ -99,6 +109,7 @@ async def get_session_without_commit() -> AsyncIterator[AsyncSession]:
     # This is Fastapi dependency
     # session: AsyncSession = Depends(get_session)
     async with db_manager.session_without_commit() as session:
+        logger.info(f'Сессия {id(session)} без комита получена')
         yield session
 
 
@@ -107,4 +118,5 @@ async def get_session_with_commit() -> AsyncIterator[AsyncSession]:
     # This is Fastapi dependency
     # session: AsyncSession = Depends(get_session)
     async with db_manager.session_with_commit() as session:
+        logger.info(f'Сессия {id(session)} с комитом получена')
         yield session
