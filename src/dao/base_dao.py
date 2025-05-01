@@ -125,3 +125,32 @@ class BaseDAO(Generic[T]):
         except SQLAlchemyError as error:
             logger.error(f'Ошибка при создании записи {self.model.__name__} с данными {object_data}: {error}')
             raise error
+
+    async def update(self, session: AsyncSession, update_object: T, update_data: BaseModel) -> T:
+        """Обновляем объект в БД.
+
+        Args:
+            session (AsyncSession): сессия БД
+            update_object (T): объект для обновления
+            update_data (BaseModel): данные для обновления
+
+        Returns:
+            T: обновленный объект
+
+        """
+        try:
+            object_data = update_data.model_dump(exclude_unset=True)
+            logger.info(f'Обновляем запись {self.model.__name__} с данными {object_data}')
+            for key, value in object_data.items():
+                if hasattr(update_object, key):
+                    setattr(update_object, key, value)
+            session.add(update_object)
+            await session.commit()
+            await session.refresh(update_object)
+            logger.info(f'Запись {self.model.__name__} с данными {object_data} обновлена.')
+            return update_object
+        except SQLAlchemyError as error:
+            logger.error(
+                f'Ошибка при обновлении записи {self.model.__name__} с данными {object_data}: {error}',
+            )
+            raise error
