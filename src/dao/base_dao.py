@@ -21,7 +21,11 @@ class BaseDAO(Generic[T]):
         if self.model is None:
             raise ValueError('Модель должна быть указана в дочернем классе')
 
-    async def get_one_or_none_by_id(self, session: AsyncSession, obj_id: int) -> T | None:
+    async def get_one_or_none_by_id(
+        self,
+        session: AsyncSession,
+        obj_id: int,
+    ) -> T | None:
         """Получаем один объект из БД по его ID.
 
         Args:
@@ -45,7 +49,11 @@ class BaseDAO(Generic[T]):
             logger.error(f'Ошибка при поиске записи с ID {obj_id}: {error}')
             raise error
 
-    async def find_one_or_none(self, session: AsyncSession, filter_params: dict | None = None) -> T | None:
+    async def find_one_or_none(
+        self,
+        session: AsyncSession,
+        filter_params: dict | None = None,
+    ) -> T | None:
         """Поиск одной записи по параметрам.
 
         Args:
@@ -59,7 +67,9 @@ class BaseDAO(Generic[T]):
         try:
             if not filter_params:
                 filter_params = {}
-            logger.info(f'Ищем запись {self.model.__name__} по параметрам {filter_params}')
+            logger.info(
+                f'Ищем запись {self.model.__name__} по параметрам {filter_params}',
+            )
             query = select(self.model).filter_by(**filter_params)
             result = await session.execute(query)
             result = result.scalar_one_or_none()
@@ -71,10 +81,16 @@ class BaseDAO(Generic[T]):
             return result
 
         except SQLAlchemyError as error:
-            logger.error(f'Ошибка при поиске записи по параметрам {filter_params}: {error}')
+            logger.error(
+                f'Ошибка при поиске записи по параметрам {filter_params}: {error}',
+            )
             raise error
 
-    async def find_all(self, session: AsyncSession, filter_params: dict | None = None) -> list[T] | None:
+    async def find_all(
+        self,
+        session: AsyncSession,
+        filter_params: dict | None = None,
+    ) -> list[T] | None:
         """Поиск одной записи по параметрам.
 
         Args:
@@ -88,7 +104,9 @@ class BaseDAO(Generic[T]):
         try:
             if not filter_params:
                 filter_params = {}
-            logger.info(f'Ищем записи {self.model.__name__} по параметрам {filter_params}')
+            logger.info(
+                f'Ищем записи {self.model.__name__} по параметрам {filter_params}',
+            )
             query = select(self.model).filter_by(**filter_params)
             result = await session.execute(query)
             result = result.scalars().all()
@@ -99,7 +117,9 @@ class BaseDAO(Generic[T]):
             return result if result else None
 
         except SQLAlchemyError as error:
-            logger.error(f'Ошибка при поиске записей по параметрам {filter_params}: {error}')
+            logger.error(
+                f'Ошибка при поиске записей по параметрам {filter_params}: {error}',
+            )
             raise error
 
     async def create(self, session: AsyncSession, new_object: BaseModel) -> T:
@@ -120,13 +140,22 @@ class BaseDAO(Generic[T]):
             session.add(new_instance)
             await session.commit()
             await session.refresh(new_instance)
-            logger.info(f'Запись {self.model.__name__} с данными {object_data} создана.')
+            logger.info(
+                f'Запись {self.model.__name__} с данными {object_data} создана.',
+            )
             return new_instance
         except SQLAlchemyError as error:
-            logger.error(f'Ошибка при создании записи {self.model.__name__} с данными {object_data}: {error}')
+            logger.error(
+                f'Ошибка при создании записи {self.model.__name__} с данными {object_data}: {error}',
+            )
             raise error
 
-    async def update(self, session: AsyncSession, update_object: T, update_data: BaseModel) -> T:
+    async def update(
+        self,
+        session: AsyncSession,
+        update_object: T,
+        update_data: BaseModel,
+    ) -> T:
         """Обновляем объект в БД.
 
         Args:
@@ -140,14 +169,18 @@ class BaseDAO(Generic[T]):
         """
         try:
             object_data = update_data.model_dump(exclude_unset=True)
-            logger.info(f'Обновляем запись {self.model.__name__} с данными {object_data}')
+            logger.info(
+                f'Обновляем запись {self.model.__name__} с данными {object_data}',
+            )
             for key, value in object_data.items():
                 if hasattr(update_object, key):
                     setattr(update_object, key, value)
             session.add(update_object)
             await session.commit()
             await session.refresh(update_object)
-            logger.info(f'Запись {self.model.__name__} с данными {object_data} обновлена.')
+            logger.info(
+                f'Запись {self.model.__name__} с данными {object_data} обновлена.',
+            )
             return update_object
         except SQLAlchemyError as error:
             logger.error(
@@ -168,9 +201,13 @@ class BaseDAO(Generic[T]):
         """
         try:
             logger.info(f'Удаляем запись {self.model.__name__} с ID {delete_object.id}')
-            session.delete(delete_object)
+            await session.delete(delete_object)
             await session.commit()
-            logger.info(f'Запись {self.model.__name__} с ID {delete_object.id} удалена.')
+            logger.info(
+                f'Запись {self.model.__name__} с ID {delete_object.id} удалена.',
+            )
         except SQLAlchemyError as error:
-            logger.error(f'Ошибка при удалении записи {self.model.__name__} с ID {delete_object.id}: {error}')
+            logger.error(
+                f'Ошибка при удалении записи {self.model.__name__} с ID {delete_object.id}: {error}',
+            )
             raise error
