@@ -34,11 +34,9 @@ class Settings(BaseSettings):
     @property
     def database_url(self) -> str:
         """Создание строки подключения к базе данных."""
-        db_host = self.postgres_server if RUN_IN_DOCKER else 'localhost'
-
         return (
             f'postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}@'
-            f'{db_host}:{self.postgres_port}/{self.postgres_db}'
+            f'{self.postgres_server}:{self.postgres_port}/{self.postgres_db}'
         )
 
 
