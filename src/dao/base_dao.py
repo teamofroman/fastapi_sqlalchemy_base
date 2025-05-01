@@ -1,6 +1,7 @@
 from typing import Generic, Type, TypeVar
 
 from loguru import logger
+from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -99,4 +100,28 @@ class BaseDAO(Generic[T]):
 
         except SQLAlchemyError as error:
             logger.error(f'Ошибка при поиске записей по параметрам {filter_params}: {error}')
+            raise error
+
+    async def create(self, session: AsyncSession, new_object: BaseModel) -> T:
+        """Создаем новый объект в БД.
+
+        Args:
+            session (AsyncSession): сессия БД
+            new_object (BaseModel): данные объекта для создания
+
+        Returns:
+            T: созданный объект
+
+        """
+        try:
+            object_data = new_object.model_dump(exclude_unset=True)
+            logger.info(f'Создаем запись {self.model.__name__} с данными {object_data}')
+            new_instance = self.model(**object_data)
+            session.add(new_instance)
+            await session.commit()
+            await session.refresh(new_instance)
+            logger.info(f'Запись {self.model.__name__} с данными {object_data} создана.')
+            return new_instance
+        except SQLAlchemyError as error:
+            logger.error(f'Ошибка при создании записи {self.model.__name__} с данными {object_data}: {error}')
             raise error
