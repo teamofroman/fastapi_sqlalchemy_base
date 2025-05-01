@@ -93,7 +93,7 @@ class BaseDAO(Generic[T]):
             result = await session.execute(query)
             result = result.scalars().all()
             logger.info(
-                f'Найдено {len(result)} записей {self.model.__name__} с по параметрами {filter_params} ',
+                f'Найдено {len(result)} записей {self.model.__name__} с параметрами {filter_params} ',
             )
 
             return result if result else None
@@ -153,4 +153,24 @@ class BaseDAO(Generic[T]):
             logger.error(
                 f'Ошибка при обновлении записи {self.model.__name__} с данными {object_data}: {error}',
             )
+            raise error
+
+    async def delete(self, session: AsyncSession, delete_object: T) -> None:
+        """Удаляем объект из БД.
+
+        Args:
+            session (AsyncSession): сессия БД
+            delete_object (T): объект для удаления
+
+        Returns:
+            None
+
+        """
+        try:
+            logger.info(f'Удаляем запись {self.model.__name__} с ID {delete_object.id}')
+            session.delete(delete_object)
+            await session.commit()
+            logger.info(f'Запись {self.model.__name__} с ID {delete_object.id} удалена.')
+        except SQLAlchemyError as error:
+            logger.error(f'Ошибка при удалении записи {self.model.__name__} с ID {delete_object.id}: {error}')
             raise error
