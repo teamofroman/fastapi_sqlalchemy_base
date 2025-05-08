@@ -1,4 +1,4 @@
-from typing import Generic, Type, TypeVar
+from typing import Any, Generic, Type, TypeVar
 
 from loguru import logger
 from pydantic import BaseModel
@@ -6,7 +6,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-# from sqlalchemy import update as sqlalchemy_update, delete as sqlalchemy_delete, func
 from core.base_model import Base
 
 T = TypeVar('T', bound=Base)
@@ -20,6 +19,25 @@ class BaseDAO(Generic[T]):
     def __init__(self) -> None:  # noqa: D107
         if self.model is None:
             raise ValueError('Модель должна быть указана в дочернем классе')
+
+    def check_filter_params(self, filter_params: dict[str, Any]) -> bool:
+        """Проверка параметров для поиска.
+
+        Args:
+            filter_params (dict[str, Any]): параметры для поиска
+
+        Returns:
+            bool: True, если параметры корректны, иначе False
+
+        """
+        uncorrect_params = [
+            param for param in filter_params.keys() if param not in self.model.__table__.columns.keys()
+        ]
+        if uncorrect_params:
+            logger.error(f'Неизвестные параметры для поиска: {uncorrect_params} для {self.model.__name__}')
+            return False
+
+        return True
 
     async def get_one_or_none_by_id(
         self,
@@ -52,13 +70,13 @@ class BaseDAO(Generic[T]):
     async def find_one_or_none(
         self,
         session: AsyncSession,
-        filter_params: dict | None = None,
+        filter_params: dict[str, Any] | None = None,
     ) -> T | None:
         """Поиск одной записи по параметрам.
 
         Args:
             session (AsyncSession): сессия БД
-            filter_params (dict): параметры для поиска
+            filter_params (dict[str, Any]): параметры для поиска
 
         Returns:
             T | None: найденная запись или None, если не найдена
@@ -67,6 +85,10 @@ class BaseDAO(Generic[T]):
         try:
             if not filter_params:
                 filter_params = {}
+
+            if not self.check_filter_params(filter_params):
+                return None
+
             logger.info(
                 f'Ищем запись {self.model.__name__} по параметрам {filter_params}',
             )
@@ -89,13 +111,13 @@ class BaseDAO(Generic[T]):
     async def find_all(
         self,
         session: AsyncSession,
-        filter_params: dict | None = None,
+        filter_params: dict[str, Any] | None = None,
     ) -> list[T] | None:
-        """Поиск одной записи по параметрам.
+        """Поиск всех записей по параметрам.
 
         Args:
             session (AsyncSession): сессия БД
-            filter_params (dict): параметры для поиска
+            filter_params (dict[str, Any]): параметры для поиска
 
         Returns:
             list[T] | None: найденные записи или None, если не найдено
@@ -104,6 +126,10 @@ class BaseDAO(Generic[T]):
         try:
             if not filter_params:
                 filter_params = {}
+
+            if not self.check_filter_params(filter_params):
+                return None
+
             logger.info(
                 f'Ищем записи {self.model.__name__} по параметрам {filter_params}',
             )
