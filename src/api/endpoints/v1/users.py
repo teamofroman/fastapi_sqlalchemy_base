@@ -15,9 +15,20 @@ router = APIRouter()
 )
 async def get_all_users(
     session: AsyncSession = Depends(get_session_with_commit),
+    name: str | None = None,
+    full_name: str | None = None,
 ) -> list[UserDB]:
     """Получение списка пользователей."""
-    user_list = await user_dao.find_all(session=session)
+    filter_params = {}
+    if name:
+        filter_params['name'] = name
+    if full_name:
+        filter_params['full_name'] = full_name
+
+    user_list = await user_dao.find_all(
+        session=session,
+        filter_params=filter_params,
+    )
 
     return user_list or []
 
